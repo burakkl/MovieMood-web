@@ -1,0 +1,238 @@
+.movie-details-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: #fff;
+}
+
+.movie-header {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.poster {
+    width: 300px;
+    height: 450px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.movie-info {
+    flex: 1;
+}
+
+.movie-info h1 {
+    font-size: 36px;
+    margin-bottom: 15px;
+}
+
+.movie-info p {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.movie-info .imdb-rating span,
+.movie-info .user-rating span {
+    color: #e50914;
+    font-weight: bold;
+}
+
+.overview {
+    line-height: 1.6;
+    margin-top: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    padding: 12px 24px;
+    background: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.action-buttons button:hover:not(:disabled) {
+    background: #f40612;
+    transform: translateY(-2px);
+}
+
+.action-buttons button:disabled {
+    background: #444;
+    cursor: not-allowed;
+}
+
+.comments-section {
+    margin-top: 40px;
+}
+
+.comments-section h2 {
+    margin-bottom: 20px;
+}
+
+.comment-form {
+    margin-bottom: 30px;
+}
+
+.comment-form textarea {
+    width: 100%;
+    padding: 12px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+.comment-form button {
+    padding: 10px 20px;
+    background: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.comment-form button:hover {
+    background: #f40612;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.comment {
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.comment strong {
+    color: #e50914;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.comment p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.delete-btn {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #8b0000;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-btn:hover {
+    background: #a00;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 12px;
+    min-width: 400px;
+    border: 1px solid #333;
+}
+
+.modal h2 {
+    margin-bottom: 20px;
+}
+
+.modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal input[type="range"] {
+    width: 100%;
+}
+
+.modal button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal button[type="submit"] {
+    background: #e50914;
+    color: #fff;
+}
+
+.modal button[type="submit"]:hover {
+    background: #f40612;
+}
+
+.modal button[type="button"] {
+    background: #444;
+    color: #fff;
+}
+
+.modal button[type="button"]:hover {
+    background: #555;
+}
+
+.lists-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.lists-selection button {
+    padding: 12px;
+    background: #2a2a2a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.lists-selection button:hover {
+    background: #333;
+}
+
+.loading,
+.error {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+}

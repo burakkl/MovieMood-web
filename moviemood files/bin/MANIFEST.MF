@@ -1,0 +1,2 @@
+Main-Class: MainDB 
+Class-Path: lib/sqlite-jdbc-3.47.2.0.jar lib/json-20231013.jar 
