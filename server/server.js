@@ -24,7 +24,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'https://moviemood-frontend.onrender.com', 'https://moviemood.burakklc.com'],
     credentials: true
   }
 });
@@ -41,6 +41,8 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:5174',
+      'https://moviemood-frontend.onrender.com',
+      'https://moviemood.burakklc.com',
       /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d{4}$/,
       /^http:\/\/139\.179\.\d{1,3}\.\d{1,3}:\d{4}$/,
       /https:\/\/.*\.loca\.lt$/
@@ -66,9 +68,10 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
