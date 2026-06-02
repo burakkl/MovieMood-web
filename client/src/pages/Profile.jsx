@@ -168,7 +168,7 @@ function Profile() {
         setSearchError('');
         setFoundUser(null);
         try {
-            const res = await userAPI.getUser(searchId.trim());
+            const res = await userAPI.findByCode(searchId.trim());
             const user = res.data;
             if (String(user.user_id) === String(currentUser.userId || currentUser.user_id)) {
                 setSearchError('Bu senin hesabın!');

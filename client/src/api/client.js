@@ -69,6 +69,7 @@ export const friendAPI = {
 // User APIs
 export const userAPI = {
     getUser: (id) => api.get(`/users/${id}`),
+    findByCode: (code) => api.get(`/users/find/${code}`),
     getFavorites: (userId) => api.get(`/users/${userId}/favorites`),
     addToFavorites: (userId, movieId) => api.post(`/users/${userId}/favorites`, { movie_id: movieId }),
     removeFromFavorites: (userId, movieId) => api.delete(`/users/${userId}/favorites/${movieId}`),
