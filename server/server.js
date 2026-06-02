@@ -22,6 +22,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+app.set('trust proxy', 1); // Required for secure cookies behind Render's proxy
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
