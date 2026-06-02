@@ -27,6 +27,7 @@ const initDatabase = async () => {
   }
 
   createTables();
+  seedMovies();
 };
 
 // Create tables
@@ -228,6 +229,58 @@ const createTables = () => {
 
   // Save database to file
   saveDatabase();
+};
+
+// Seed movies from JSON on first run
+const seedMovies = () => {
+  const countResult = db.exec('SELECT COUNT(*) FROM movies');
+  const count = countResult[0]?.values?.[0]?.[0] || 0;
+  if (count > 0) {
+    console.log(`✓ Movies already in database (${count} movies)`);
+    return;
+  }
+
+  const moviesPath = join(__dirname, '..', '..', 'moviemood files', 'codes', 'movies_with_youtube_links.json');
+  if (!fs.existsSync(moviesPath)) {
+    console.log('⚠ Movies JSON not found, skipping seed');
+    return;
+  }
+
+  const GENRE_MAP = {
+    28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
+    80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
+    14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
+    9648: 'Mystery', 10749: 'Romance', 878: 'Science Fiction',
+    10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+  };
+
+  const pages = JSON.parse(fs.readFileSync(moviesPath, 'utf8'));
+  let inserted = 0;
+
+  for (const page of pages) {
+    for (const movie of (page.results || [])) {
+      try {
+        const year = movie.release_date ? parseInt(movie.release_date.substring(0, 4)) : null;
+        db.run(
+          `INSERT OR IGNORE INTO movies (movie_id, title, original_title, overview, language, release_date, rating, vote_count, poster_path, backdrop_path, popularity, web_link, youtube_link)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [movie.id, movie.title, movie.original_title, movie.overview, movie.original_language,
+           year, movie.vote_average, movie.vote_count, movie.poster_path, movie.backdrop_path,
+           movie.popularity, movie.imdb_link || null, movie.youtube_link || null]
+        );
+        for (const genreId of (movie.genre_ids || [])) {
+          const genreName = GENRE_MAP[genreId];
+          if (genreName) {
+            db.run('INSERT OR IGNORE INTO movie_genres (movie_id, genre) VALUES (?, ?)', [movie.id, genreName]);
+          }
+        }
+        inserted++;
+      } catch (_) { /* skip duplicates */ }
+    }
+  }
+
+  saveDatabase();
+  console.log(`✓ Seeded ${inserted} movies`);
 };
 
 // Save database to file
