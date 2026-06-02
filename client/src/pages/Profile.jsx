@@ -31,7 +31,8 @@ function Profile() {
     const [searchError, setSearchError] = useState('');
     const [searching, setSearching] = useState(false);
 
-    const isOwnProfile = !id || (currentUser && id === String(currentUser.id));
+    const myId = currentUser?.userId || currentUser?.user_id;
+    const isOwnProfile = !id || (currentUser && id === String(myId));
 
     useEffect(() => {
         if (!currentUser) return;
@@ -47,7 +48,7 @@ function Profile() {
             if (isOwnProfile) {
                 user = currentUser;
                 // Fetch friend requests for own profile
-                const requestsRes = await friendAPI.getPendingRequests(currentUser.id);
+                const requestsRes = await friendAPI.getPendingRequests(myId);
                 setFriendRequests(requestsRes.data);
             } else {
                 // Fetch other user
@@ -55,7 +56,7 @@ function Profile() {
                 user = userRes.data;
 
                 // Check friendship status
-                const statusRes = await friendAPI.checkStatus(currentUser.id, id);
+                const statusRes = await friendAPI.checkStatus(myId, id);
                 setFriendshipStatus(statusRes.data.status);
                 setRequestId(statusRes.data.requestId);
             }
@@ -63,7 +64,7 @@ function Profile() {
             setProfileUser(user);
 
             // Fetch generic profile data (Lists, Friends, Favorites)
-            const userIdToFetch = user.id || user.user_id;
+            const userIdToFetch = user.userId || user.user_id;
 
             const [listsRes, friendsRes, favoritesRes] = await Promise.all([
                 listAPI.getUserLists(userIdToFetch),
@@ -110,10 +111,10 @@ function Profile() {
     // Friend Actions
     const handleAddFriend = async () => {
         try {
-            await friendAPI.sendFriendRequest(currentUser.id, profileUser.user_id);
+            await friendAPI.sendFriendRequest(myId, profileUser.user_id);
             setFriendshipStatus('pending_sent');
             // Re-check to get request ID if needed, or just assume sent
-            const statusRes = await friendAPI.checkStatus(currentUser.id, profileUser.user_id);
+            const statusRes = await friendAPI.checkStatus(myId, profileUser.user_id);
             setRequestId(statusRes.data.requestId);
         } catch (err) {
             alert('Failed to send friend request');
@@ -198,7 +199,7 @@ function Profile() {
     const handleRemoveFriend = async () => {
         if (!confirm('Are you sure you want to remove this friend?')) return;
         try {
-            await friendAPI.removeFriend(currentUser.id, profileUser.user_id);
+            await friendAPI.removeFriend(myId, profileUser.user_id);
             setFriendshipStatus('none');
             fetchProfileData();
         } catch (err) {
