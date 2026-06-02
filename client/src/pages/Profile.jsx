@@ -21,9 +21,15 @@ function Profile() {
     const [userFavorites, setUserFavorites] = useState([]);
 
     // Interactions
-    const [friendshipStatus, setFriendshipStatus] = useState('none'); // 'none', 'friends', 'pending_sent', 'pending_received'
+    const [friendshipStatus, setFriendshipStatus] = useState('none');
     const [requestId, setRequestId] = useState(null);
-    const [friendRequests, setFriendRequests] = useState([]); // Only for own profile
+    const [friendRequests, setFriendRequests] = useState([]);
+
+    // Add friend by ID
+    const [searchId, setSearchId] = useState('');
+    const [foundUser, setFoundUser] = useState(null);
+    const [searchError, setSearchError] = useState('');
+    const [searching, setSearching] = useState(false);
 
     const isOwnProfile = !id || (currentUser && id === String(currentUser.id));
 
@@ -155,6 +161,40 @@ function Profile() {
         }
     };
 
+    const handleSearchUser = async () => {
+        if (!searchId.trim()) return;
+        setSearching(true);
+        setSearchError('');
+        setFoundUser(null);
+        try {
+            const res = await userAPI.getUser(searchId.trim());
+            const user = res.data;
+            if (String(user.user_id) === String(currentUser.userId || currentUser.user_id)) {
+                setSearchError('Bu senin hesabın!');
+                return;
+            }
+            setFoundUser(user);
+        } catch {
+            setSearchError('Kullanıcı bulunamadı. ID\'yi kontrol et.');
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleSendRequestToFound = async () => {
+        if (!foundUser) return;
+        try {
+            await friendAPI.sendFriendRequest(currentUser.userId || currentUser.user_id, foundUser.user_id);
+            setFoundUser(null);
+            setSearchId('');
+            setSearchError('');
+            alert(`${foundUser.firstname} ${foundUser.lastname} kişisine arkadaşlık isteği gönderildi!`);
+        } catch (err) {
+            const msg = err.response?.data?.error || 'İstek gönderilemedi';
+            setSearchError(msg);
+        }
+    };
+
     const handleRemoveFriend = async () => {
         if (!confirm('Are you sure you want to remove this friend?')) return;
         try {
@@ -245,9 +285,53 @@ function Profile() {
                     </div>
 
                     <div className={styles.sections}>
+
+                        {/* ── Arkadaş Ekle (sadece kendi profilinde) ── */}
+                        {isOwnProfile && (
+                            <div className={styles.addFriendSection}>
+                                <h2 className={styles.sectionTitle}>Arkadaş Ekle</h2>
+                                <div className={styles.addFriendRow}>
+                                    <input
+                                        className={styles.addFriendInput}
+                                        type="number"
+                                        placeholder="Kullanıcı ID'sini gir..."
+                                        value={searchId}
+                                        onChange={e => { setSearchId(e.target.value); setFoundUser(null); setSearchError(''); }}
+                                        onKeyDown={e => e.key === 'Enter' && handleSearchUser()}
+                                    />
+                                    <button
+                                        className={styles.actionBtn}
+                                        onClick={handleSearchUser}
+                                        disabled={searching}
+                                    >
+                                        {searching ? 'Aranıyor...' : 'Ara'}
+                                    </button>
+                                </div>
+                                {searchError && <p style={{ color: '#ff6b6b', marginTop: 8, fontSize: 13 }}>{searchError}</p>}
+                                {foundUser && (
+                                    <div className={styles.foundUser}>
+                                        <div className={styles.foundUserAvatar}>
+                                            {foundUser.profile_picture_path
+                                                ? <img src={getImageUrl(foundUser.profile_picture_path)} alt="" />
+                                                : foundUser.firstname?.[0]
+                                            }
+                                        </div>
+                                        <div className={styles.foundUserInfo}>
+                                            <div className={styles.foundUserName}>{foundUser.firstname} {foundUser.lastname}</div>
+                                            <div className={styles.foundUserCode}>ID: {foundUser.user_code || foundUser.user_id}</div>
+                                        </div>
+                                        <button className={styles.actionBtn} onClick={handleSendRequestToFound}>
+                                            İstek Gönder
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── Gelen Arkadaşlık İstekleri ── */}
                         {isOwnProfile && friendRequests.length > 0 && (
-                            <div className={styles.section}>
-                                <h2 className={styles.sectionTitle}>Friend Requests</h2>
+                            <div className={styles.section} style={{ gridColumn: '1 / -1' }}>
+                                <h2 className={styles.sectionTitle}>Gelen İstekler ({friendRequests.length})</h2>
                                 <div className={styles.requestList}>
                                     {friendRequests.map(req => (
                                         <div key={req.request_id} className={styles.requestItem}>
@@ -255,8 +339,8 @@ function Profile() {
                                                 <span>{req.firstname} {req.lastname}</span>
                                             </div>
                                             <div className={styles.requestActions}>
-                                                <button onClick={() => handleAcceptRequest(req.request_id)} className={styles.acceptBtn}>Accept</button>
-                                                <button onClick={() => handleRejectRequest(req.request_id)} className={styles.rejectBtn}>Reject</button>
+                                                <button onClick={() => handleAcceptRequest(req.request_id)} className={styles.acceptBtn}>Kabul Et</button>
+                                                <button onClick={() => handleRejectRequest(req.request_id)} className={styles.rejectBtn}>Reddet</button>
                                             </div>
                                         </div>
                                     ))}
