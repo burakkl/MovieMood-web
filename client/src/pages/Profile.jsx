@@ -170,11 +170,15 @@ function Profile() {
     if (error) return <div className={styles.error}>{error}</div>;
     if (!profileUser) return <div className={styles.error}>User not found</div>;
 
-    const profilePictureUrl = profileUser.profilePicture || profileUser.profile_picture_path
-        ? ((profileUser.profilePicture || profileUser.profile_picture_path).startsWith('http')
-            ? (profileUser.profilePicture || profileUser.profile_picture_path)
-            : `http://localhost:3000/${profileUser.profilePicture || profileUser.profile_picture_path}?t=${new Date().getTime()}`)
-        : null;
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('data:') || path.startsWith('http')) return path;
+        return `/${path}`;
+    };
+
+    const profilePictureUrl = getImageUrl(
+        profileUser.profilePicture || profileUser.profile_picture_path
+    );
 
     return (
         <div className={styles.container}>
@@ -281,7 +285,7 @@ function Profile() {
                                         <div key={friend.user_id} className={styles.friendItem} onClick={() => navigate(`/profile/${friend.user_id}`)} style={{ cursor: 'pointer' }}>
                                             <div className={styles.friendAvatar}>
                                                 {friend.profile_picture_path ? (
-                                                    <img src={friend.profile_picture_path.startsWith('http') ? friend.profile_picture_path : `http://localhost:3000/${friend.profile_picture_path}`} alt="friend" />
+                                                    <img src={getImageUrl(friend.profile_picture_path)} alt="friend" />
                                                 ) : (
                                                     <span>{friend.firstname?.[0]}</span>
                                                 )}

@@ -32,7 +32,8 @@ function Chat() {
     }, [userId]);
 
     const setupWebSocket = () => {
-        const newSocket = io('http://localhost:3000');
+        const socketUrl = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin;
+        const newSocket = io(socketUrl);
         newSocket.on('connect', () => {
             newSocket.emit('register', userId);
         });
