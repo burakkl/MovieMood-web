@@ -1,0 +1,58 @@
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 40px;
+    background-color: var(--dark-bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--netflix-red);
+}
+
+.navLinks {
+    display: flex;
+    gap: 30px;
+}
+
+.navLink {
+    color: var(--text-secondary);
+    font-size: 16px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.navLink:hover,
+.navLink.active {
+    color: var(--text-primary);
+}
+
+.userSection {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.userName {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.logoutButton {
+    padding: 8px 16px;
+    background: var(--netflix-red);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.logoutButton:hover {
+    background: var(--netflix-dark);
+}

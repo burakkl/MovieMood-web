@@ -1,0 +1,505 @@
+.my-lists-page {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.lists-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.lists-header h1 {
+    color: #fff;
+    font-size: 32px;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.create-list-btn,
+.recommend-btn {
+    padding: 12px 24px;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.create-list-btn {
+    background: #e50914;
+}
+
+.create-list-btn:hover {
+    background: #f40612;
+    transform: translateY(-2px);
+}
+
+.recommend-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.recommend-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.lists-container {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-bottom: 50px;
+}
+
+.list-section {
+    position: relative;
+    padding: 0 10px;
+}
+
+.list-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.list-header-row h2 {
+    color: #fff;
+    font-size: 24px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.list-header-row .movie-count {
+    font-size: 16px;
+    color: #999;
+    font-weight: normal;
+}
+
+.list-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.list-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.manage-btn {
+    background: #444;
+    color: #fff;
+}
+
+.manage-btn:hover {
+    background: #555;
+}
+
+/* Horizontal Scroll Container */
+.list-scroll-container {
+    width: 100%;
+    position: relative;
+}
+
+.list-movies-row {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding-bottom: 20px;
+    /* Space for scrollbar */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Scrollbar Styling */
+.list-movies-row::-webkit-scrollbar {
+    height: 10px;
+}
+
+.list-movies-row::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 5px;
+}
+
+.list-movies-row::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 5px;
+}
+
+.list-movies-row::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+.movie-card-item {
+    flex: 0 0 auto;
+    width: 160px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.movie-card-item:hover {
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+.movie-poster {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.movie-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    padding: 20px 10px 10px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.movie-card-item:hover .movie-overlay {
+    opacity: 1;
+}
+
+.movie-overlay span {
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.empty-list-placeholder {
+    height: 240px;
+    background: #1a1a1a;
+    border: 2px dashed #333;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    gap: 15px;
+}
+
+.empty-list-placeholder button {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #666;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.empty-list-placeholder button:hover {
+    border-color: #fff;
+    color: #fff;
+}
+
+.no-lists-state {
+    text-align: center;
+    padding: 100px 20px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    color: #999;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 30px;
+    min-width: 400px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid #333;
+    position: relative;
+    z-index: 1001;
+    pointer-events: all;
+}
+
+.modal-content.large {
+    min-width: 800px;
+}
+
+.modal-content h2 {
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.modal-content h3 {
+    color: #fff;
+    margin-bottom: 15px;
+    margin-top: 20px;
+}
+
+.modal-content form input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.modal-content form input:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    pointer-events: all;
+}
+
+.modal-actions button[type="submit"] {
+    background: #e50914;
+    color: #fff;
+}
+
+.modal-actions button[type="submit"]:hover {
+    background: #f40612;
+}
+
+.modal-actions button[type="button"] {
+    background: #444;
+    color: #fff;
+}
+
+.modal-actions button[type="button"]:hover {
+    background: #555;
+}
+
+.current-movies-section,
+.add-movies-section {
+    margin-bottom: 20px;
+}
+
+.movies-grid-small {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.manage-movie-card {
+    text-align: center;
+}
+
+.manage-movie-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.manage-movie-card p {
+    color: #fff;
+    font-size: 13px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.manage-movie-card button {
+    width: 100%;
+    padding: 8px;
+    background: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.manage-movie-card button:hover:not(:disabled) {
+    background: #f40612;
+}
+
+.manage-movie-card button:disabled {
+    background: #444;
+    cursor: not-allowed;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+}
+
+.search-form input {
+    flex: 1;
+    margin-bottom: 0 !important;
+}
+
+.search-form button {
+    padding: 12px 24px;
+    background: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.search-form button:hover {
+    background: #f40612;
+}
+
+.close-modal-btn {
+    width: 100%;
+    padding: 12px;
+    background: #444;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.close-modal-btn:hover {
+    background: #555;
+}
+
+/* Rename Feature Styles */
+.title-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.edit-icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    width: auto !important;
+}
+
+.edit-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.rename-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rename-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.2rem;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #222;
+    color: white;
+}
+
+.rename-input:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.rename-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.rename-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.save-btn {
+    background-color: #e50914;
+    color: white;
+}
+
+.save-btn:hover {
+    background-color: #f40612;
+}
+
+.cancel-btn {
+    background-color: #444;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #555;
+}

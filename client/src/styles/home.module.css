@@ -1,0 +1,86 @@
+.container {
+    min-height: 100vh;
+    background-color: var(--dark-bg);
+}
+
+.content {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    color: var(--text-secondary);
+    font-size: 18px;
+}
+
+.section {
+    margin-bottom: 40px;
+}
+
+.sectionTitle {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Grid for Popular Movies */
+.movieGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+/* Horizontal Scroll for Recent Movies */
+.scrollRow {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding-bottom: 20px;
+}
+
+.movieCard {
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    /* Ensure fixed width for scroll items */
+    min-width: 180px;
+    width: 180px;
+}
+
+.movieCard:hover {
+    transform: scale(1.05);
+}
+
+.poster {
+    width: 100%;
+    height: 270px;
+    object-fit: cover;
+    display: block;
+    border-radius: 8px;
+}
+
+.movieInfo {
+    padding: 10px 0;
+}
+
+.movieTitle {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rating {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
