@@ -4,30 +4,21 @@ import db from '../controllers/DatabaseManager.js';
 const router = express.Router();
 
 // Register
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
     const { email, firstname, lastname, password } = req.body;
-
     try {
-        // Check if user exists
-        const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const existingUser = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
         if (existingUser) {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        // Generate random user ID
         const userId = Math.floor(1000 + Math.random() * 9000);
-
-        // Generate 4-digit unique user code
         const userCode = Math.floor(1000 + Math.random() * 9000).toString();
-
-        // Random profile picture (1-7)
         const profilePicture = `images/${Math.floor(Math.random() * 7) + 1}.jpg`;
 
-        // Insert user (in production, hash the password!)
-        const stmt = db.prepare(
+        await db.prepare(
             'INSERT INTO users (user_id, firstname, lastname, email, password_hash, profile_picture_path, user_code) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        );
-        stmt.run(userId, firstname, lastname, email, password, profilePicture, userCode);
+        ).run(userId, firstname, lastname, email, password, profilePicture, userCode);
 
         const user = { userId, firstname, lastname, email, profilePicture, userCode };
         req.session.userId = userId;
@@ -40,25 +31,21 @@ router.post('/register', (req, res) => {
 });
 
 // Login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-
     try {
-        const user = db.prepare('SELECT * FROM users WHERE email = ? AND password_hash = ?').get(email, password);
+        const user = await db.prepare('SELECT * FROM users WHERE email = ? AND password_hash = ?').get(email, password);
 
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Ensure user has a user_code (backward compatibility)
         if (!user.user_code) {
             user.user_code = Math.floor(1000 + Math.random() * 9000).toString();
-            db.prepare('UPDATE users SET user_code = ? WHERE user_id = ?').run(user.user_code, user.user_id);
+            await db.prepare('UPDATE users SET user_code = ? WHERE user_id = ?').run(user.user_code, user.user_id);
         }
 
-        // Set session user ID
         req.session.userId = user.user_id;
-        console.log('Login successful, session userId set:', req.session.userId);
 
         req.session.save(err => {
             if (err) {
@@ -90,13 +77,13 @@ router.post('/logout', (req, res) => {
 });
 
 // Get current user
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(req.session.userId);
+    const user = await db.prepare('SELECT * FROM users WHERE user_id = ?').get(req.session.userId);
 
     if (!user) {
         return res.status(404).json({ error: 'User not found' });

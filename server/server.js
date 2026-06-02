@@ -125,24 +125,21 @@ io.on('connection', (socket) => {
   });
 
   // Send message
-  socket.on('send_message', (data) => {
+  socket.on('send_message', async (data) => {
     const { chatId, senderId, receiverId, messageText } = data;
 
     try {
-      // Save message to database
-      const result = db.prepare('INSERT INTO messages (chat_id, sender_id, message_text) VALUES (?, ?, ?)').run(chatId, senderId, messageText);
+      const result = await db.prepare('INSERT INTO messages (chat_id, sender_id, message_text) VALUES (?, ?, ?)').run(chatId, senderId, messageText);
 
-      const message = db.prepare(`
+      const message = await db.prepare(`
         SELECT m.*, u.firstname, u.lastname
         FROM messages m
         INNER JOIN users u ON m.sender_id = u.user_id
         WHERE m.message_id = ?
       `).get(result.lastID);
 
-      // Send to sender
       socket.emit('message_received', message);
 
-      // Send to receiver if online
       const receiverSocketId = connectedUsers.get(parseInt(receiverId));
       if (receiverSocketId) {
         io.to(receiverSocketId).emit('message_received', message);

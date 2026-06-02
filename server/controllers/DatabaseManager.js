@@ -1,240 +1,191 @@
-import initSqlJs from 'sql.js';
+import pg from 'pg';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 
+const { Pool } = pg;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Database path
-const dbPath = join(__dirname, '..', '..', 'moviemood.db');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
 
-// Initialize database
-let db;
-let SQL;
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+});
 
+// Convert SQLite ? placeholders to PostgreSQL $1, $2, ...
+const convertPlaceholders = (sql) => {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+};
+
+const isInsertOrIgnore = (sql) => /INSERT\s+OR\s+IGNORE/i.test(sql);
+const isInsert = (sql) => sql.trim().toUpperCase().startsWith('INSERT');
+
+const preparePgSQL = (sql) => {
+  const wasInsertOrIgnore = isInsertOrIgnore(sql);
+  let pgSQL = sql.replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
+  pgSQL = convertPlaceholders(pgSQL);
+  return { pgSQL, wasInsertOrIgnore };
+};
+
+const flatParams = (params) => params.flat();
+
+// ─── Schema ────────────────────────────────────────────────────────────────
 const initDatabase = async () => {
-  SQL = await initSqlJs();
-
-  // Check if database file exists
-  if (fs.existsSync(dbPath)) {
-    const buffer = fs.readFileSync(dbPath);
-    db = new SQL.Database(buffer);
-    console.log('✓ Database loaded from existing file');
-  } else {
-    db = new SQL.Database();
-    console.log('✓ New database created');
-  }
-
-  createTables();
-  seedMovies();
-};
-
-// Create tables
-const createTables = () => {
-  // Users table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      firstname TEXT NOT NULL,
-      lastname TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      profile_picture_path TEXT,
-      user_code TEXT
-    )
-  `);
-
-  // Migration: Add user_code column if it doesn't exist
+  const client = await pool.connect();
   try {
-    const result = db.exec("PRAGMA table_info(users)");
-    // result[0].values is array of arrays [cid, name, type, notnull, dflt_value, pk]
-    // name is the second element (index 1)
-    const columns = result.length > 0 ? result[0].values.map(row => row[1]) : [];
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        user_id INTEGER PRIMARY KEY,
+        firstname TEXT NOT NULL,
+        lastname TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        profile_picture_path TEXT,
+        user_code TEXT
+      )
+    `);
 
-    const hasUserCode = columns.includes('user_code');
-    if (!hasUserCode) {
-      console.log('Adding user_code column to users table...');
-      db.run('ALTER TABLE users ADD COLUMN user_code TEXT');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS movies (
+        movie_id INTEGER PRIMARY KEY,
+        title TEXT NOT NULL,
+        original_title TEXT,
+        director TEXT,
+        overview TEXT,
+        language TEXT,
+        release_date INTEGER,
+        rating FLOAT,
+        vote_count INTEGER,
+        poster_path TEXT,
+        backdrop_path TEXT,
+        popularity FLOAT,
+        web_link TEXT,
+        youtube_link TEXT
+      )
+    `);
 
-      // Generate codes for existing users
-      const usersResult = db.exec('SELECT user_id FROM users');
-      if (usersResult.length > 0) {
-        const userIds = usersResult[0].values.map(row => row[0]);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS movie_genres (
+        movie_id INTEGER REFERENCES movies(movie_id),
+        genre TEXT,
+        PRIMARY KEY(movie_id, genre)
+      )
+    `);
 
-        userIds.forEach(userId => {
-          const code = Math.floor(1000 + Math.random() * 9000).toString();
-          db.run('UPDATE users SET user_code = ? WHERE user_id = ?', [code, userId]);
-        });
-        console.log(`Updated ${userIds.length} existing users with user codes`);
-      }
-    }
-  } catch (error) {
-    console.error('Migration error:', error);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS comments (
+        comment_id SERIAL PRIMARY KEY,
+        movie_id INTEGER REFERENCES movies(movie_id),
+        user_id INTEGER REFERENCES users(user_id),
+        comment_text TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_ratings (
+        user_id INTEGER REFERENCES users(user_id),
+        movie_id INTEGER REFERENCES movies(movie_id),
+        rating FLOAT,
+        PRIMARY KEY(user_id, movie_id)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_favorites (
+        user_id INTEGER REFERENCES users(user_id),
+        movie_id INTEGER REFERENCES movies(movie_id),
+        PRIMARY KEY(user_id, movie_id)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_friends (
+        user_id INTEGER REFERENCES users(user_id),
+        friend_id INTEGER REFERENCES users(user_id),
+        PRIMARY KEY(user_id, friend_id)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS friend_requests (
+        request_id SERIAL PRIMARY KEY,
+        sender_id INTEGER REFERENCES users(user_id),
+        receiver_id INTEGER REFERENCES users(user_id),
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(sender_id, receiver_id)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_lists (
+        list_id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(user_id),
+        list_name TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS list_movies (
+        list_id INTEGER REFERENCES user_lists(list_id) ON DELETE CASCADE,
+        movie_id INTEGER REFERENCES movies(movie_id),
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(list_id, movie_id)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chats (
+        chat_id SERIAL PRIMARY KEY,
+        user1_id INTEGER REFERENCES users(user_id),
+        user2_id INTEGER REFERENCES users(user_id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user1_id, user2_id)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        message_id SERIAL PRIMARY KEY,
+        chat_id INTEGER REFERENCES chats(chat_id) ON DELETE CASCADE,
+        sender_id INTEGER REFERENCES users(user_id),
+        message_text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_watch_history (
+        user_id INTEGER REFERENCES users(user_id),
+        movie_id INTEGER REFERENCES movies(movie_id),
+        watched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id, movie_id)
+      )
+    `);
+
+    console.log('✓ Database tables created successfully');
+  } finally {
+    client.release();
   }
 
-  // Movies table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS movies (
-      movie_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      original_title TEXT,
-      director TEXT,
-      overview TEXT,
-      language TEXT,
-      release_date INTEGER,
-      rating REAL,
-      vote_count INTEGER,
-      poster_path TEXT,
-      backdrop_path TEXT,
-      popularity REAL,
-      web_link TEXT,
-      youtube_link TEXT
-    )
-  `);
-
-  // Movie genres
-  db.run(`
-    CREATE TABLE IF NOT EXISTS movie_genres (
-      movie_id INTEGER,
-      genre TEXT,
-      FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-      PRIMARY KEY(movie_id, genre)
-    )
-  `);
-
-  // Comments
-  db.run(`
-    CREATE TABLE IF NOT EXISTS comments (
-      comment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      movie_id INTEGER,
-      user_id INTEGER,
-      comment_text TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-      FOREIGN KEY(user_id) REFERENCES users(user_id)
-    )
-  `);
-
-  // User ratings
-  db.run(`
-    CREATE TABLE IF NOT EXISTS user_ratings (
-      user_id INTEGER,
-      movie_id INTEGER,
-      rating REAL,
-      FOREIGN KEY(user_id) REFERENCES users(user_id),
-      FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-      PRIMARY KEY(user_id, movie_id)
-    )
-  `);
-
-  // User favorites
-  db.run(`
-    CREATE TABLE IF NOT EXISTS user_favorites (
-      user_id INTEGER,
-      movie_id INTEGER,
-      FOREIGN KEY(user_id) REFERENCES users(user_id),
-      FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-      PRIMARY KEY(user_id, movie_id)
-    )
-  `);
-
-  // User friends
-  db.run(`
-    CREATE TABLE IF NOT EXISTS user_friends (
-      user_id INTEGER,
-      friend_id INTEGER,
-      FOREIGN KEY(user_id) REFERENCES users(user_id),
-      FOREIGN KEY(friend_id) REFERENCES users(user_id),
-      PRIMARY KEY(user_id, friend_id)
-    )
-  `);
-
-  // Friend requests
-  db.run(`
-    CREATE TABLE IF NOT EXISTS friend_requests (
-      request_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sender_id INTEGER,
-      receiver_id INTEGER,
-      status TEXT DEFAULT 'pending',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(sender_id) REFERENCES users(user_id),
-      FOREIGN KEY(receiver_id) REFERENCES users(user_id),
-      UNIQUE(sender_id, receiver_id)
-    )
-  `);
-
-  // User lists (custom movie lists)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS user_lists (
-      list_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      list_name TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(user_id)
-    )
-  `);
-
-  // List movies (many-to-many relationship)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS list_movies (
-      list_id INTEGER,
-      movie_id INTEGER,
-      added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(list_id) REFERENCES user_lists(list_id) ON DELETE CASCADE,
-      FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-      PRIMARY KEY(list_id, movie_id)
-    )
-  `);
-
-  // Chats
-  db.run(`
-    CREATE TABLE IF NOT EXISTS chats (
-      chat_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user1_id INTEGER,
-      user2_id INTEGER,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user1_id) REFERENCES users(user_id),
-      FOREIGN KEY(user2_id) REFERENCES users(user_id),
-      UNIQUE(user1_id, user2_id)
-    )
-  `);
-
-  // Messages
-  db.run(`
-    CREATE TABLE IF NOT EXISTS messages (
-      message_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      chat_id INTEGER,
-      sender_id INTEGER,
-      message_text TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(chat_id) REFERENCES chats(chat_id) ON DELETE CASCADE,
-      FOREIGN KEY(sender_id) REFERENCES users(user_id)
-    )
-  `);
-
-  // User watch history (recently watched movies)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS user_watch_history (
-      user_id INTEGER,
-      movie_id INTEGER,
-      watched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(user_id),
-      FOREIGN KEY(movie_id) REFERENCES movies(movie_id),
-      PRIMARY KEY(user_id, movie_id)
-    )
-  `);
-
-  console.log('✓ Database tables created successfully');
-
-  // Save database to file
-  saveDatabase();
+  await seedMovies();
 };
 
-// Seed movies from JSON on first run
-const seedMovies = () => {
-  const countResult = db.exec('SELECT COUNT(*) FROM movies');
-  const count = countResult[0]?.values?.[0]?.[0] || 0;
+// ─── Seeder ────────────────────────────────────────────────────────────────
+const seedMovies = async () => {
+  const result = await pool.query('SELECT COUNT(*) FROM movies');
+  const count = parseInt(result.rows[0].count);
   if (count > 0) {
     console.log(`✓ Movies already in database (${count} movies)`);
     return;
@@ -255,111 +206,93 @@ const seedMovies = () => {
   };
 
   const pages = JSON.parse(fs.readFileSync(moviesPath, 'utf8'));
+  const client = await pool.connect();
   let inserted = 0;
 
-  for (const page of pages) {
-    for (const movie of (page.results || [])) {
-      try {
-        const year = movie.release_date ? parseInt(movie.release_date.substring(0, 4)) : null;
-        db.run(
-          `INSERT OR IGNORE INTO movies (movie_id, title, original_title, overview, language, release_date, rating, vote_count, poster_path, backdrop_path, popularity, web_link, youtube_link)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [movie.id, movie.title, movie.original_title, movie.overview, movie.original_language,
-           year, movie.vote_average, movie.vote_count, movie.poster_path, movie.backdrop_path,
-           movie.popularity, movie.imdb_link || null, movie.youtube_link || null]
-        );
-        for (const genreId of (movie.genre_ids || [])) {
-          const genreName = GENRE_MAP[genreId];
-          if (genreName) {
-            db.run('INSERT OR IGNORE INTO movie_genres (movie_id, genre) VALUES (?, ?)', [movie.id, genreName]);
+  try {
+    for (const page of pages) {
+      for (const movie of (page.results || [])) {
+        try {
+          const year = movie.release_date ? parseInt(movie.release_date.substring(0, 4)) : null;
+          await client.query(
+            `INSERT INTO movies (movie_id, title, original_title, overview, language, release_date, rating, vote_count, poster_path, backdrop_path, popularity, web_link, youtube_link)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+             ON CONFLICT (movie_id) DO NOTHING`,
+            [movie.id, movie.title, movie.original_title, movie.overview, movie.original_language,
+             year, movie.vote_average, movie.vote_count, movie.poster_path, movie.backdrop_path,
+             movie.popularity, movie.imdb_link || null, movie.youtube_link || null]
+          );
+          for (const genreId of (movie.genre_ids || [])) {
+            const genreName = GENRE_MAP[genreId];
+            if (genreName) {
+              await client.query(
+                'INSERT INTO movie_genres (movie_id, genre) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                [movie.id, genreName]
+              );
+            }
           }
-        }
-        inserted++;
-      } catch (_) { /* skip duplicates */ }
+          inserted++;
+        } catch (_) { /* skip */ }
+      }
     }
+  } finally {
+    client.release();
   }
 
-  saveDatabase();
   console.log(`✓ Seeded ${inserted} movies`);
 };
 
-// Save database to file
-const saveDatabase = () => {
-  if (db) {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(dbPath, buffer);
-  }
-};
-
-// Database wrapper to match better-sqlite3 API
-const dbWrapper = {
+// ─── DB Wrapper (same API as before, but async) ───────────────────────────
+const db = {
   prepare: (sql) => {
+    const { pgSQL, wasInsertOrIgnore } = preparePgSQL(sql);
+    const insert = isInsert(sql);
+
     return {
-      get: (...params) => {
+      get: async (...params) => {
         try {
-          const stmt = db.prepare(sql);
-          if (params.length > 0) {
-            stmt.bind(params);
-          }
-          const result = stmt.step() ? stmt.getAsObject() : null;
-          stmt.free();
-          return result;
+          const result = await pool.query(pgSQL, flatParams(params));
+          return result.rows[0] || null;
         } catch (error) {
-          console.error('Query error (get):', error, 'SQL:', sql);
+          console.error('Query error (get):', error.message, '\nSQL:', pgSQL);
           return null;
         }
       },
-      all: (...params) => {
+      all: async (...params) => {
         try {
-          const stmt = db.prepare(sql);
-          if (params.length > 0) {
-            stmt.bind(params);
-          }
-          const rows = [];
-          while (stmt.step()) {
-            rows.push(stmt.getAsObject());
-          }
-          stmt.free();
-          return rows;
+          const result = await pool.query(pgSQL, flatParams(params));
+          return result.rows;
         } catch (error) {
-          console.error('Query error (all):', error, 'SQL:', sql);
+          console.error('Query error (all):', error.message, '\nSQL:', pgSQL);
           return [];
         }
       },
-      run: (...params) => {
+      run: async (...params) => {
         try {
-          const stmt = db.prepare(sql);
-          if (params.length > 0) {
-            stmt.bind(params);
-          }
-          stmt.step();
-          const lastID = db.exec("SELECT last_insert_rowid() as id")[0]?.values?.[0]?.[0] || 0;
-          stmt.free();
-          saveDatabase();
-          return {
-            changes: db.getRowsModified(),
-            lastID: lastID
-          };
+          let finalSQL = pgSQL;
+          if (wasInsertOrIgnore) finalSQL += ' ON CONFLICT DO NOTHING';
+          if (insert && !wasInsertOrIgnore) finalSQL += ' RETURNING *';
+
+          const result = await pool.query(finalSQL, flatParams(params));
+          const row = result.rows[0] || {};
+          const lastID = row.message_id ?? row.comment_id ?? row.list_id ??
+                         row.chat_id ?? row.request_id ?? row.user_id ?? 0;
+          return { changes: result.rowCount, lastID, lastRow: row };
         } catch (error) {
-          console.error('Query error (run):', error, 'SQL:', sql);
+          console.error('Query error (run):', error.message, '\nSQL:', pgSQL);
           throw error;
         }
       }
     };
   },
-  exec: (sql) => {
-    try {
-      db.exec(sql);
-      saveDatabase();
-    } catch (error) {
-      console.error('Exec error:', error);
-      throw error;
-    }
+
+  // Raw PostgreSQL query (for complex dynamic queries)
+  rawQuery: async (sql, params = []) => {
+    const result = await pool.query(sql, params);
+    return result.rows;
   }
 };
 
-// Initialize on import
 await initDatabase();
 
-export default dbWrapper;
+export default db;

@@ -3,28 +3,18 @@ import db from '../controllers/DatabaseManager.js';
 
 const router = express.Router();
 
-// Check friendship status between two users
-router.get('/check/:userId/:targetId', (req, res) => {
+router.get('/check/:userId/:targetId', async (req, res) => {
     try {
         const { userId, targetId } = req.params;
 
-        // Check if friends
-        const isFriend = db.prepare('SELECT * FROM user_friends WHERE user_id = ? AND friend_id = ?').get(userId, targetId);
-        if (isFriend) {
-            return res.json({ status: 'friends' });
-        }
+        const isFriend = await db.prepare('SELECT * FROM user_friends WHERE user_id = ? AND friend_id = ?').get(userId, targetId);
+        if (isFriend) return res.json({ status: 'friends' });
 
-        // Check for pending request (Sent)
-        const sentRequest = db.prepare('SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = ?').get(userId, targetId, 'pending');
-        if (sentRequest) {
-            return res.json({ status: 'pending_sent', requestId: sentRequest.request_id });
-        }
+        const sentRequest = await db.prepare('SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = ?').get(userId, targetId, 'pending');
+        if (sentRequest) return res.json({ status: 'pending_sent', requestId: sentRequest.request_id });
 
-        // Check for pending request (Received)
-        const receivedRequest = db.prepare('SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = ?').get(targetId, userId, 'pending');
-        if (receivedRequest) {
-            return res.json({ status: 'pending_received', requestId: receivedRequest.request_id });
-        }
+        const receivedRequest = await db.prepare('SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = ?').get(targetId, userId, 'pending');
+        if (receivedRequest) return res.json({ status: 'pending_received', requestId: receivedRequest.request_id });
 
         res.json({ status: 'none' });
     } catch (error) {
@@ -33,18 +23,15 @@ router.get('/check/:userId/:targetId', (req, res) => {
     }
 });
 
-// Get user's friends list
-router.get('/:userId', (req, res) => {
+router.get('/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-
-        const friends = db.prepare(`
+        const friends = await db.prepare(`
             SELECT u.user_id, u.firstname, u.lastname, u.email, u.profile_picture_path
             FROM users u
             INNER JOIN user_friends uf ON u.user_id = uf.friend_id
             WHERE uf.user_id = ?
         `).all(userId);
-
         res.json(friends);
     } catch (error) {
         console.error(error);
@@ -52,42 +39,25 @@ router.get('/:userId', (req, res) => {
     }
 });
 
-// Send friend request by user ID
-router.post('/request', (req, res) => {
+router.post('/request', async (req, res) => {
     try {
         const { senderId, receiverId } = req.body;
 
-        if (!senderId || !receiverId) {
-            return res.status(400).json({ error: 'Sender ID and Receiver ID are required' });
-        }
+        if (!senderId || !receiverId) return res.status(400).json({ error: 'Sender ID and Receiver ID are required' });
+        if (senderId === receiverId) return res.status(400).json({ error: 'Cannot send friend request to yourself' });
 
-        if (senderId === receiverId) {
-            return res.status(400).json({ error: 'Cannot send friend request to yourself' });
-        }
+        const receiver = await db.prepare('SELECT * FROM users WHERE user_id = ?').get(receiverId);
+        if (!receiver) return res.status(404).json({ error: 'User not found' });
 
-        // Check if receiver exists
-        const receiver = db.prepare('SELECT * FROM users WHERE user_id = ?').get(receiverId);
-        if (!receiver) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        const areFriends = await db.prepare('SELECT * FROM user_friends WHERE user_id = ? AND friend_id = ?').get(senderId, receiverId);
+        if (areFriends) return res.status(400).json({ error: 'Already friends with this user' });
 
-        // Check if already friends
-        const areFriends = db.prepare('SELECT * FROM user_friends WHERE user_id = ? AND friend_id = ?').get(senderId, receiverId);
-        if (areFriends) {
-            return res.status(400).json({ error: 'Already friends with this user' });
-        }
-
-        // Check if request already exists
-        const existingRequest = db.prepare(
+        const existingRequest = await db.prepare(
             'SELECT * FROM friend_requests WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)'
         ).get(senderId, receiverId, receiverId, senderId);
+        if (existingRequest) return res.status(400).json({ error: 'Friend request already exists' });
 
-        if (existingRequest) {
-            return res.status(400).json({ error: 'Friend request already exists' });
-        }
-
-        db.prepare('INSERT INTO friend_requests (sender_id, receiver_id, status) VALUES (?, ?, ?)').run(senderId, receiverId, 'pending');
-
+        await db.prepare('INSERT INTO friend_requests (sender_id, receiver_id, status) VALUES (?, ?, ?)').run(senderId, receiverId, 'pending');
         res.json({ message: 'Friend request sent' });
     } catch (error) {
         console.error(error);
@@ -95,19 +65,16 @@ router.post('/request', (req, res) => {
     }
 });
 
-// Get pending friend requests for a user
-router.get('/requests/:userId', (req, res) => {
+router.get('/requests/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-
-        const requests = db.prepare(`
+        const requests = await db.prepare(`
             SELECT fr.request_id, fr.sender_id, fr.created_at, u.firstname, u.lastname, u.profile_picture_path
             FROM friend_requests fr
             INNER JOIN users u ON fr.sender_id = u.user_id
             WHERE fr.receiver_id = ? AND fr.status = 'pending'
             ORDER BY fr.created_at DESC
         `).all(userId);
-
         res.json(requests);
     } catch (error) {
         console.error(error);
@@ -115,23 +82,15 @@ router.get('/requests/:userId', (req, res) => {
     }
 });
 
-// Accept friend request
-router.post('/accept/:requestId', (req, res) => {
+router.post('/accept/:requestId', async (req, res) => {
     try {
         const { requestId } = req.params;
+        const request = await db.prepare('SELECT * FROM friend_requests WHERE request_id = ? AND status = ?').get(requestId, 'pending');
+        if (!request) return res.status(404).json({ error: 'Friend request not found' });
 
-        const request = db.prepare('SELECT * FROM friend_requests WHERE request_id = ? AND status = ?').get(requestId, 'pending');
-
-        if (!request) {
-            return res.status(404).json({ error: 'Friend request not found' });
-        }
-
-        // Add to user_friends (both directions)
-        db.prepare('INSERT INTO user_friends (user_id, friend_id) VALUES (?, ?)').run(request.receiver_id, request.sender_id);
-        db.prepare('INSERT INTO user_friends (user_id, friend_id) VALUES (?, ?)').run(request.sender_id, request.receiver_id);
-
-        // Update request status
-        db.prepare('UPDATE friend_requests SET status = ? WHERE request_id = ?').run('accepted', requestId);
+        await db.prepare('INSERT INTO user_friends (user_id, friend_id) VALUES (?, ?)').run(request.receiver_id, request.sender_id);
+        await db.prepare('INSERT INTO user_friends (user_id, friend_id) VALUES (?, ?)').run(request.sender_id, request.receiver_id);
+        await db.prepare('UPDATE friend_requests SET status = ? WHERE request_id = ?').run('accepted', requestId);
 
         res.json({ message: 'Friend request accepted' });
     } catch (error) {
@@ -140,20 +99,13 @@ router.post('/accept/:requestId', (req, res) => {
     }
 });
 
-// Reject friend request
-router.post('/reject/:requestId', (req, res) => {
+router.post('/reject/:requestId', async (req, res) => {
     try {
         const { requestId } = req.params;
+        const request = await db.prepare('SELECT * FROM friend_requests WHERE request_id = ? AND status = ?').get(requestId, 'pending');
+        if (!request) return res.status(404).json({ error: 'Friend request not found' });
 
-        const request = db.prepare('SELECT * FROM friend_requests WHERE request_id = ? AND status = ?').get(requestId, 'pending');
-
-        if (!request) {
-            return res.status(404).json({ error: 'Friend request not found' });
-        }
-
-        // Update request status
-        db.prepare('UPDATE friend_requests SET status = ? WHERE request_id = ?').run('rejected', requestId);
-
+        await db.prepare('UPDATE friend_requests SET status = ? WHERE request_id = ?').run('rejected', requestId);
         res.json({ message: 'Friend request rejected' });
     } catch (error) {
         console.error(error);
@@ -161,11 +113,10 @@ router.post('/reject/:requestId', (req, res) => {
     }
 });
 
-// Cancel/Delete friend request
-router.delete('/request/:requestId', (req, res) => {
+router.delete('/request/:requestId', async (req, res) => {
     try {
         const { requestId } = req.params;
-        db.prepare('DELETE FROM friend_requests WHERE request_id = ?').run(requestId);
+        await db.prepare('DELETE FROM friend_requests WHERE request_id = ?').run(requestId);
         res.json({ message: 'Friend request deleted' });
     } catch (error) {
         console.error(error);
@@ -173,20 +124,14 @@ router.delete('/request/:requestId', (req, res) => {
     }
 });
 
-// Remove friend
-router.delete('/:friendId', (req, res) => {
+router.delete('/:friendId', async (req, res) => {
     try {
         const { friendId } = req.params;
         const { userId } = req.body;
+        if (!userId) return res.status(400).json({ error: 'User ID is required' });
 
-        if (!userId) {
-            return res.status(400).json({ error: 'User ID is required' });
-        }
-
-        // Remove friendship (both directions)
-        db.prepare('DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?').run(userId, friendId);
-        db.prepare('DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?').run(friendId, userId);
-
+        await db.prepare('DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?').run(userId, friendId);
+        await db.prepare('DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?').run(friendId, userId);
         res.json({ message: 'Friend removed' });
     } catch (error) {
         console.error(error);
