@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import pg from 'pg';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
