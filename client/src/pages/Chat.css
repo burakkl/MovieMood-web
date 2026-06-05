@@ -161,3 +161,114 @@
     color: #666;
     font-size: 18px;
 }
+
+/* Share List Button & Card */
+.share-list-btn {
+    padding: 12px;
+    background: #444 !important;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.share-list-btn:hover {
+    background: #555 !important;
+}
+
+.shared-list-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.shared-list-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.shared-list-icon {
+    font-size: 24px;
+}
+.shared-list-info strong {
+    display: block;
+    font-size: 14px;
+}
+.shared-list-info span {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Chat Modals */
+.chat-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+.chat-modal-content {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    min-width: 300px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.chat-modal-content.large {
+    min-width: 500px;
+}
+.modal-lists-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+.modal-list-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+}
+.modal-list-item:hover {
+    background: #333;
+}
+.shared-movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+.shared-movie-card img {
+    width: 100%;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.shared-movie-card p {
+    font-size: 12px;
+    text-align: center;
+    margin-top: 5px;
+    color: #fff;
+}
+.chat-modal-close {
+    width: 100%;
+    padding: 12px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.chat-modal-close:hover {
+    background: #555;
+}

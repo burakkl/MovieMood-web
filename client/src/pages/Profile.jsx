@@ -241,7 +241,7 @@ function Profile() {
             content = (
                 <ul className={styles.list}>
                     {userLists.map(list => (
-                        <li key={list.list_id}>{list.list_name} ({list.movie_count || 0} movies)</li>
+                        <li key={list.list_id}>{list.list_name} ({list.movies?.length || 0} movies)</li>
                     ))}
                 </ul>
             );
@@ -424,7 +424,7 @@ function Profile() {
                                 <>
                                     <ul className={styles.list}>
                                         {userLists.slice(0, 4).map(list => (
-                                            <li key={list.list_id}>{list.list_name} ({list.movie_count || 0} movies)</li>
+                                            <li key={list.list_id}>{list.list_name} ({list.movies?.length || 0} movies)</li>
                                         ))}
                                     </ul>
                                     {userLists.length > 4 && (

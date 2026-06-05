@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
-import { chatAPI, friendAPI } from '../api/client';
+import { chatAPI, friendAPI, listAPI } from '../api/client';
 import Navbar from '../components/Navbar';
 import './Chat.css';
 
@@ -13,6 +13,9 @@ function Chat() {
     const [messageText, setMessageText] = useState('');
     const [socket, setSocket] = useState(null);
     const [chatId, setChatId] = useState(null);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [myLists, setMyLists] = useState([]);
+    const [viewListModal, setViewListModal] = useState(null);
     const { currentUser: user } = useAuth();
     const navigate = useNavigate();
     const userId = user?.userId || user?.user_id;
@@ -83,6 +86,66 @@ function Chat() {
         setMessageText('');
     };
 
+    const handleOpenShareModal = async () => {
+        try {
+            const response = await listAPI.getUserLists(userId);
+            setMyLists(response.data);
+            setShowShareModal(true);
+        } catch (error) {
+            console.error('Failed to load lists for sharing:', error);
+        }
+    };
+
+    const shareList = (list) => {
+        if (!socket || !chatId || !selectedFriend) return;
+        const text = `[SHARED_LIST:${list.list_id}:${list.list_name}]`;
+        socket.emit('send_message', {
+            chatId,
+            senderId: userId,
+            receiverId: selectedFriend.user_id,
+            messageText: text
+        });
+        setShowShareModal(false);
+    };
+
+    const openSharedList = async (listId, listOwnerId) => {
+        try {
+            const res = await listAPI.getUserLists(listOwnerId);
+            const list = res.data.find(l => String(l.list_id) === String(listId));
+            if (list) {
+                setViewListModal(list);
+            } else {
+                alert('List not found or deleted');
+            }
+        } catch (e) {
+            console.error('Failed to load shared list', e);
+        }
+    };
+
+    const renderMessageContent = (msg) => {
+        const match = msg.message_text.match(/^\[SHARED_LIST:([^:]+):(.+)\]$/);
+        if (match) {
+            const listId = match[1];
+            const listName = match[2];
+            return (
+                <div className="shared-list-card" onClick={() => openSharedList(listId, msg.sender_id)}>
+                    <div className="shared-list-icon">🎬</div>
+                    <div className="shared-list-info">
+                        <strong>Shared List: {listName}</strong>
+                        <span>Click to view movies</span>
+                    </div>
+                </div>
+            );
+        }
+        return <p>{msg.message_text}</p>;
+    };
+
+    const getPosterUrl = (posterPath) => {
+        if (!posterPath) return 'https://via.placeholder.com/150x225';
+        if (posterPath.startsWith('http')) return posterPath;
+        return `https://image.tmdb.org/t/p/w500${posterPath}`;
+    };
+
     return (
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
@@ -123,7 +186,7 @@ function Chat() {
                                         key={idx}
                                         className={`message ${msg.sender_id === userId ? 'sent' : 'received'}`}
                                     >
-                                        <p>{msg.message_text}</p>
+                                        {renderMessageContent(msg)}
                                         <span className="timestamp">
                                             {new Date(msg.created_at).toLocaleTimeString()}
                                         </span>
@@ -131,6 +194,9 @@ function Chat() {
                                 ))}
                             </div>
                             <form onSubmit={sendMessage} className="message-input-form">
+                                <button type="button" className="share-list-btn" onClick={handleOpenShareModal}>
+                                    🔗 Share List
+                                </button>
                                 <input
                                     type="text"
                                     value={messageText}
@@ -147,6 +213,50 @@ function Chat() {
                     )}
                 </div>
             </div>
+
+            {/* Share List Modal */}
+            {showShareModal && (
+                <div className="chat-modal-overlay" onClick={() => setShowShareModal(false)}>
+                    <div className="chat-modal-content" onClick={e => e.stopPropagation()}>
+                        <h2>Share a List</h2>
+                        <div className="modal-lists-container">
+                            {myLists.length > 0 ? (
+                                myLists.map(list => (
+                                    <div key={list.list_id} className="modal-list-item" onClick={() => shareList(list)}>
+                                        <strong>{list.list_name}</strong>
+                                        <span>({list.movies?.length || 0} movies)</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>You don't have any lists yet.</p>
+                            )}
+                        </div>
+                        <button className="chat-modal-close" onClick={() => setShowShareModal(false)}>Close</button>
+                    </div>
+                </div>
+            )}
+
+            {/* View Shared List Modal */}
+            {viewListModal && (
+                <div className="chat-modal-overlay" onClick={() => setViewListModal(null)}>
+                    <div className="chat-modal-content large" onClick={e => e.stopPropagation()}>
+                        <h2>Shared List: {viewListModal.list_name}</h2>
+                        <div className="shared-movies-grid">
+                            {viewListModal.movies && viewListModal.movies.length > 0 ? (
+                                viewListModal.movies.map(movie => (
+                                    <div key={movie.movie_id} className="shared-movie-card" onClick={() => navigate(`/movies/${movie.movie_id}`)}>
+                                        <img src={getPosterUrl(movie.poster_path)} alt={movie.title} />
+                                        <p>{movie.title}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>This list is empty.</p>
+                            )}
+                        </div>
+                        <button className="chat-modal-close" onClick={() => setViewListModal(null)}>Close</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
