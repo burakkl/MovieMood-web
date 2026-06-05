@@ -5,13 +5,13 @@
 }
 
 :root {
-  --netflix-red: #E50914;
-  --netflix-dark: #990409;
-  --dark-bg: #141414;
-  --dark-bg-2: #181818;
-  --text-primary: #ffffff;
-  --text-secondary: #b3b3b3;
-  --accent: #ff2828;
+  --netflix-red: #6366f1;
+  --netflix-dark: #4f46e5;
+  --dark-bg: #0b0f19;
+  --dark-bg-2: #111827;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --accent: #8b5cf6;
 }
 
 body {

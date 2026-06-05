@@ -26,7 +26,7 @@
 
 .search-input:focus {
     outline: none;
-    border-color: #e50914;
+    border-color: var(--netflix-red);
 }
 
 .search-button,
@@ -41,12 +41,12 @@
 }
 
 .search-button {
-    background: #e50914;
+    background: var(--netflix-red);
     color: #fff;
 }
 
 .search-button:hover {
-    background: #f40612;
+    background: var(--netflix-dark);
     transform: translateY(-2px);
 }
 
@@ -119,12 +119,12 @@
 }
 
 .apply-button {
-    background: #e50914;
+    background: var(--netflix-red);
     color: #fff;
 }
 
 .apply-button:hover {
-    background: #f40612;
+    background: var(--netflix-dark);
 }
 
 .clear-button {
@@ -164,7 +164,7 @@
 
 .movie-card:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.5);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
 }
 
 .movie-poster {

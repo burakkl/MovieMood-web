@@ -148,7 +148,7 @@
 }
 
 .actionBtn:hover {
-    background-color: #c11119;
+    background-color: var(--netflix-dark);
 }
 
 .actionBtn.secondary {

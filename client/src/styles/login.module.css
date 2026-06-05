@@ -5,7 +5,7 @@
 }
 
 .leftPanel {
-    background: linear-gradient(135deg, #990409 0%, #E50914 100%);
+    background: linear-gradient(135deg, var(--netflix-dark) 0%, var(--netflix-red) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -13,7 +13,7 @@
 }
 
 .rightPanel {
-    background: linear-gradient(135deg, #141414 0%, #1a1a24 100%);
+    background: linear-gradient(135deg, var(--dark-bg) 0%, var(--dark-bg-2) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -70,7 +70,7 @@
     padding: 15px 20px;
     border: none;
     border-radius: 25px;
-    background: linear-gradient(135deg, #E50914 0%, #990409 100%);
+    background: linear-gradient(135deg, var(--netflix-red) 0%, var(--netflix-dark) 100%);
     color: white;
     font-size: 16px;
     font-weight: bold;
@@ -80,9 +80,9 @@
 }
 
 .signInButton:hover {
-    background: linear-gradient(135deg, #ff2828 0%, #E50914 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--netflix-red) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(229, 9, 20, 0.4);
+    box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
 }
 
 .signUpSection {
@@ -99,7 +99,7 @@
 .signUpButton {
     width: 400px;
     padding: 15px 20px;
-    border: 2px solid #ff2828;
+    border: 2px solid var(--accent);
     border-radius: 25px;
     background: transparent;
     color: white;
@@ -110,10 +110,10 @@
 }
 
 .signUpButton:hover {
-    background: linear-gradient(135deg, #ff2828 0%, #E50914 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--netflix-red) 100%);
     border-color: transparent;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 40, 40, 0.4);
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
 }
 
 .error {
