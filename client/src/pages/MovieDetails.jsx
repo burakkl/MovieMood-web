@@ -246,7 +246,7 @@ function MovieDetails() {
                             <div key={c.comment_id} className="comment">
                                 <strong>{c.firstname} {c.lastname}</strong>
                                 <p>{c.comment_text}</p>
-                                {user && c.user_id === user.user_id && (
+                                {user && c.user_id === (user.userId || user.user_id) && (
                                     <button onClick={() => handleDeleteComment(c.comment_id)} className="delete-btn">Delete</button>
                                 )}
                             </div>
