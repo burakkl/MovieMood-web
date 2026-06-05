@@ -31,6 +31,9 @@ function Profile() {
     const [searchError, setSearchError] = useState('');
     const [searching, setSearching] = useState(false);
 
+    // Modal state for see more
+    const [activeModal, setActiveModal] = useState(null);
+
     const myId = currentUser?.userId || currentUser?.user_id;
     const isOwnProfile = !id || (currentUser && id === String(myId));
 
@@ -221,9 +224,69 @@ function Profile() {
         profileUser.profilePicture || profileUser.profile_picture_path
     );
 
+    const renderModal = () => {
+        if (!activeModal) return null;
+
+        let title = '';
+        let content = null;
+
+        if (activeModal === 'lists') {
+            title = `Lists (${userLists.length})`;
+            content = (
+                <ul className={styles.list}>
+                    {userLists.map(list => (
+                        <li key={list.list_id}>{list.list_name} ({list.movie_count || 0} movies)</li>
+                    ))}
+                </ul>
+            );
+        } else if (activeModal === 'friends') {
+            title = `Friends (${userFriends.length})`;
+            content = (
+                <div className={styles.friendGrid}>
+                    {userFriends.map(friend => (
+                        <div key={friend.user_id} className={styles.friendItem} onClick={() => { setActiveModal(null); navigate(`/profile/${friend.user_id}`); }} style={{ cursor: 'pointer' }}>
+                            <div className={styles.friendAvatar}>
+                                {friend.profile_picture_path ? (
+                                    <img src={getImageUrl(friend.profile_picture_path)} alt="friend" />
+                                ) : (
+                                    <span>{friend.firstname?.[0]}</span>
+                                )}
+                            </div>
+                            <span>{friend.firstname} {friend.lastname}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        } else if (activeModal === 'favorites') {
+            title = `Favorites (${userFavorites.length})`;
+            content = (
+                <div className={styles.movieGrid}>
+                    {userFavorites.map(movie => (
+                        <div key={movie.movie_id} className={styles.miniMovie} onClick={() => { setActiveModal(null); navigate(`/movies/${movie.movie_id}`); }}>
+                            <img src={movie.poster_url} alt={movie.title} />
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        return (
+            <div className={styles.modalOverlay} onClick={() => setActiveModal(null)}>
+                <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                    <div className={styles.modalHeader}>
+                        <h2>{title}</h2>
+                        <button className={styles.closeBtn} onClick={() => setActiveModal(null)}>&times;</button>
+                    </div>
+                    {content}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className={styles.container}>
             <Navbar />
+            {renderModal()}
 
             <div className={styles.content}>
                 <div className={styles.profileCard}>
@@ -352,11 +415,18 @@ function Profile() {
                         <div className={styles.section}>
                             <h2 className={styles.sectionTitle}>Lists</h2>
                             {userLists.length > 0 ? (
-                                <ul className={styles.list}>
-                                    {userLists.map(list => (
-                                        <li key={list.list_id}>{list.list_name} ({list.movie_count || 0} movies)</li>
-                                    ))}
-                                </ul>
+                                <>
+                                    <ul className={styles.list}>
+                                        {userLists.slice(0, 4).map(list => (
+                                            <li key={list.list_id}>{list.list_name} ({list.movie_count || 0} movies)</li>
+                                        ))}
+                                    </ul>
+                                    {userLists.length > 4 && (
+                                        <button className={styles.seeMoreBtn} onClick={() => setActiveModal('lists')}>
+                                            + See All ({userLists.length})
+                                        </button>
+                                    )}
+                                </>
                             ) : (
                                 <p className={styles.placeholder}>No lists yet</p>
                             )}
@@ -365,20 +435,27 @@ function Profile() {
                         <div className={styles.section}>
                             <h2 className={styles.sectionTitle}>Friends ({userFriends.length})</h2>
                             {userFriends.length > 0 ? (
-                                <div className={styles.friendGrid}>
-                                    {userFriends.map(friend => (
-                                        <div key={friend.user_id} className={styles.friendItem} onClick={() => navigate(`/profile/${friend.user_id}`)} style={{ cursor: 'pointer' }}>
-                                            <div className={styles.friendAvatar}>
-                                                {friend.profile_picture_path ? (
-                                                    <img src={getImageUrl(friend.profile_picture_path)} alt="friend" />
-                                                ) : (
-                                                    <span>{friend.firstname?.[0]}</span>
-                                                )}
+                                <>
+                                    <div className={styles.friendGrid}>
+                                        {userFriends.slice(0, 4).map(friend => (
+                                            <div key={friend.user_id} className={styles.friendItem} onClick={() => navigate(`/profile/${friend.user_id}`)} style={{ cursor: 'pointer' }}>
+                                                <div className={styles.friendAvatar}>
+                                                    {friend.profile_picture_path ? (
+                                                        <img src={getImageUrl(friend.profile_picture_path)} alt="friend" />
+                                                    ) : (
+                                                        <span>{friend.firstname?.[0]}</span>
+                                                    )}
+                                                </div>
+                                                <span>{friend.firstname} {friend.lastname}</span>
                                             </div>
-                                            <span>{friend.firstname} {friend.lastname}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                    {userFriends.length > 4 && (
+                                        <button className={styles.seeMoreBtn} onClick={() => setActiveModal('friends')}>
+                                            + See All ({userFriends.length})
+                                        </button>
+                                    )}
+                                </>
                             ) : (
                                 <p className={styles.placeholder}>No friends yet</p>
                             )}
@@ -387,13 +464,20 @@ function Profile() {
                         <div className={styles.section}>
                             <h2 className={styles.sectionTitle}>Favorites ({userFavorites.length})</h2>
                             {userFavorites.length > 0 ? (
-                                <div className={styles.movieGrid}>
-                                    {userFavorites.map(movie => (
-                                        <div key={movie.movie_id} className={styles.miniMovie} onClick={() => navigate(`/movies/${movie.movie_id}`)}>
-                                            <img src={movie.poster_url} alt={movie.title} />
-                                        </div>
-                                    ))}
-                                </div>
+                                <>
+                                    <div className={styles.movieGrid}>
+                                        {userFavorites.slice(0, 4).map(movie => (
+                                            <div key={movie.movie_id} className={styles.miniMovie} onClick={() => navigate(`/movies/${movie.movie_id}`)}>
+                                                <img src={movie.poster_url} alt={movie.title} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {userFavorites.length > 4 && (
+                                        <button className={styles.seeMoreBtn} onClick={() => setActiveModal('favorites')}>
+                                            + See All ({userFavorites.length})
+                                        </button>
+                                    )}
+                                </>
                             ) : (
                                 <p className={styles.placeholder}>No favorites yet</p>
                             )}
