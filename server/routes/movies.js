@@ -119,6 +119,45 @@ router.get('/genre/:genre', async (req, res) => {
     }
 });
 
+router.get('/genres', async (req, res) => {
+    try {
+        const { genres } = req.query; 
+        if (!genres) return res.json([]);
+        
+        const genreList = genres.split(',');
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+        const sortBy = req.query.sortBy || 'popularity';
+        const order = (req.query.order || 'DESC').toUpperCase();
+
+        let orderBy = 'ORDER BY m.popularity DESC';
+        if (sortBy === 'title') {
+            orderBy = `ORDER BY m.title ${order === 'DESC' ? 'DESC' : 'ASC'}`;
+        } else if (sortBy === 'rating') {
+            orderBy = `ORDER BY m.rating ${order === 'ASC' ? 'ASC' : 'DESC'}`;
+        }
+
+        const placeholders = genreList.map(() => '?').join(',');
+        
+        const movies = await db.prepare(`
+            SELECT m.* FROM movies m
+            WHERE m.movie_id IN (
+                SELECT movie_id FROM movie_genres
+                WHERE genre IN (${placeholders})
+                GROUP BY movie_id
+                HAVING COUNT(DISTINCT genre) = ?
+            )
+            ${orderBy}
+            LIMIT ? OFFSET ?
+        `).all(...genreList, genreList.length, limit, offset);
+        res.json(movies);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch movies by multiple genres' });
+    }
+});
+
 router.get('/year/:startYear/:endYear', async (req, res) => {
     try {
         const { startYear, endYear } = req.params;

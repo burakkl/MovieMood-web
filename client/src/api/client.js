@@ -25,6 +25,7 @@ export const movieAPI = {
     getById: (id) => api.get(`/movies/${id}`),
     search: (query, params) => api.get('/movies/search/query', { params: { q: query, ...params } }),
     getByGenre: (genre, params) => api.get(`/movies/genre/${genre}`, { params }),
+    getByGenres: (genres, params) => api.get('/movies/genres', { params: { genres: genres.join(','), ...params } }),
     getByYear: (startYear, endYear) => api.get(`/movies/year/${startYear}/${endYear}`),
     getRandom: (limit = 20) => api.get('/movies/random/selection', { params: { limit } }),
     getGenres: () => api.get('/movies/meta/genres'),

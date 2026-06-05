@@ -72,8 +72,8 @@ function Movies() {
                 const res = await movieAPI.search(searchQuery, params);
                 responses = [res];
             } else if (selectedGenres.length > 0) {
-                const promises = selectedGenres.map(genre => movieAPI.getByGenre(genre, params));
-                responses = await Promise.all(promises);
+                const res = await movieAPI.getByGenres(selectedGenres, params);
+                responses = [res];
             } else {
                 const res = await movieAPI.getAll(params);
                 responses = [res];
