@@ -55,7 +55,15 @@ router.post('/request', async (req, res) => {
         const existingRequest = await db.prepare(
             'SELECT * FROM friend_requests WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)'
         ).get(senderId, receiverId, receiverId, senderId);
-        if (existingRequest) return res.status(400).json({ error: 'Friend request already exists' });
+        
+        if (existingRequest) {
+            if (existingRequest.status === 'pending') {
+                return res.status(400).json({ error: 'Friend request already exists' });
+            } else {
+                // If there's an old accepted or rejected request, clean it up so we can insert a new one
+                await db.prepare('DELETE FROM friend_requests WHERE request_id = ?').run(existingRequest.request_id);
+            }
+        }
 
         await db.prepare('INSERT INTO friend_requests (sender_id, receiver_id, status) VALUES (?, ?, ?)').run(senderId, receiverId, 'pending');
         res.json({ message: 'Friend request sent' });
@@ -132,6 +140,10 @@ router.delete('/:friendId', async (req, res) => {
 
         await db.prepare('DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?').run(userId, friendId);
         await db.prepare('DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?').run(friendId, userId);
+        
+        // Clean up the old request so they can add each other again
+        await db.prepare('DELETE FROM friend_requests WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)').run(userId, friendId, friendId, userId);
+
         res.json({ message: 'Friend removed' });
     } catch (error) {
         console.error(error);
