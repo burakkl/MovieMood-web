@@ -5,7 +5,20 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const movies = await db.prepare('SELECT * FROM movies LIMIT 100').all();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+        const sortBy = req.query.sortBy || 'popularity';
+        const order = (req.query.order || 'DESC').toUpperCase();
+
+        let orderBy = 'ORDER BY popularity DESC';
+        if (sortBy === 'title') {
+            orderBy = `ORDER BY title ${order === 'DESC' ? 'DESC' : 'ASC'}`;
+        } else if (sortBy === 'rating') {
+            orderBy = `ORDER BY rating ${order === 'ASC' ? 'ASC' : 'DESC'}`;
+        }
+
+        const movies = await db.prepare(`SELECT * FROM movies ${orderBy} LIMIT ? OFFSET ?`).all(limit, offset);
         res.json(movies);
     } catch (error) {
         console.error(error);
@@ -49,11 +62,25 @@ router.get('/search/query', async (req, res) => {
         const { q } = req.query;
         if (!q) return res.status(400).json({ error: 'Search query is required' });
 
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+        const sortBy = req.query.sortBy || 'popularity';
+        const order = (req.query.order || 'DESC').toUpperCase();
+
+        let orderBy = 'ORDER BY m.popularity DESC';
+        if (sortBy === 'title') {
+            orderBy = `ORDER BY m.title ${order === 'DESC' ? 'DESC' : 'ASC'}`;
+        } else if (sortBy === 'rating') {
+            orderBy = `ORDER BY m.rating ${order === 'ASC' ? 'ASC' : 'DESC'}`;
+        }
+
         const movies = await db.prepare(`
             SELECT DISTINCT m.* FROM movies m
             WHERE m.title ILIKE ? OR m.original_title ILIKE ?
-            LIMIT 50
-        `).all(`%${q}%`, `%${q}%`);
+            ${orderBy}
+            LIMIT ? OFFSET ?
+        `).all(`%${q}%`, `%${q}%`, limit, offset);
 
         res.json(movies);
     } catch (error) {
@@ -65,12 +92,26 @@ router.get('/search/query', async (req, res) => {
 router.get('/genre/:genre', async (req, res) => {
     try {
         const { genre } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
+        const sortBy = req.query.sortBy || 'popularity';
+        const order = (req.query.order || 'DESC').toUpperCase();
+
+        let orderBy = 'ORDER BY m.popularity DESC';
+        if (sortBy === 'title') {
+            orderBy = `ORDER BY m.title ${order === 'DESC' ? 'DESC' : 'ASC'}`;
+        } else if (sortBy === 'rating') {
+            orderBy = `ORDER BY m.rating ${order === 'ASC' ? 'ASC' : 'DESC'}`;
+        }
+
         const movies = await db.prepare(`
             SELECT DISTINCT m.* FROM movies m
             INNER JOIN movie_genres mg ON m.movie_id = mg.movie_id
             WHERE mg.genre = ?
-            LIMIT 100
-        `).all(genre);
+            ${orderBy}
+            LIMIT ? OFFSET ?
+        `).all(genre, limit, offset);
         res.json(movies);
     } catch (error) {
         console.error(error);
