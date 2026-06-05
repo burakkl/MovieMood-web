@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
@@ -52,7 +53,7 @@ app.use(cors({
 
     const isAllowed = allowedOrigins.some(o =>
       o instanceof RegExp ? o.test(origin) : o === origin
-    ) || true; // Temporarily allow all for troubleshooting
+    );
 
     if (isAllowed) {
       callback(null, true);
@@ -65,10 +66,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+const PgStore = pgSession(session);
 app.use(session({
-  secret: 'moviemood-secret-key',
-  resave: true,
-  saveUninitialized: true,
+  store: new PgStore({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    createTableIfMissing: true,
+  }),
+  secret: process.env.SESSION_SECRET || 'moviemood-secret-key',
+  resave: false,
+  saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -77,13 +84,13 @@ app.use(session({
   }
 }));
 
-// Debug Middleware
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log('Session ID:', req.sessionID);
-  console.log('Session Data:', req.session);
-  next();
-});
+// Request logger (dev only)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
+}
 
 // Serve static files for uploads
 app.use('/user_uploads', express.static(path.join(__dirname, '..', 'user_uploads')));
