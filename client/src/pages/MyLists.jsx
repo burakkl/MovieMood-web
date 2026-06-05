@@ -184,7 +184,7 @@ function MyLists() {
     const generateRecommendedList = async () => {
         try {
             // Force fresh generation (bypass 24h cache)
-            const response = await recommendationAPI.generateForUser(userId);
+            const response = await recommendationAPI.generateForUser(userId, true);
             const { recommendations, metadata } = response.data;
 
             if (!recommendations || recommendations.length === 0) {

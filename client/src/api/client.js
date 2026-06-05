@@ -93,7 +93,7 @@ export const chatAPI = {
 
 // Recommendations APIs
 export const recommendationAPI = {
-    generateForUser: (userId) => api.post(`/recommendations/generate/${userId}`),
+    generateForUser: (userId, force = false) => api.post(`/recommendations/generate/${userId}${force ? '?force=true' : ''}`),
     getForYou: (userId) => api.get(`/recommendations/for-you/${userId}`),
 };
 

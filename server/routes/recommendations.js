@@ -120,7 +120,10 @@ router.post('/generate/:userId', async (req, res) => {
         `, [userId]);
 
         if (cached.length > 0 && !req.query.force) {
-            return res.json(JSON.parse(cached[0].recommendations));
+            const data = typeof cached[0].recommendations === 'string' 
+                ? JSON.parse(cached[0].recommendations) 
+                : cached[0].recommendations;
+            return res.json(data);
         }
 
         // ── Step 2: Gather signals ─────────────────────────────────────
@@ -288,7 +291,10 @@ router.get('/for-you/:userId', async (req, res) => {
         `, [userId]);
 
         if (cached.length > 0) {
-            return res.json(JSON.parse(cached[0].recommendations));
+            const data = typeof cached[0].recommendations === 'string' 
+                ? JSON.parse(cached[0].recommendations) 
+                : cached[0].recommendations;
+            return res.json(data);
         }
 
         return res.json({ recommendations: [], metadata: { source: 'empty' } });
