@@ -175,6 +175,14 @@ const initDatabase = async () => {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_recommendations (
+        user_id INTEGER PRIMARY KEY REFERENCES users(user_id),
+        recommendations JSONB NOT NULL,
+        generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('✓ Database tables created successfully');
   } finally {
     client.release();

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import MovieCard from '../components/MovieCard';
 import { useAuth } from '../context/AuthContext';
-import { movieAPI, listAPI, userAPI } from '../api/client';
+import { movieAPI, listAPI, userAPI, recommendationAPI } from '../api/client';
 import styles from '../styles/home.module.css';
 
 function Home() {
@@ -12,6 +12,7 @@ function Home() {
     const [recentlyWatched, setRecentlyWatched] = useState([]);
     const [userLists, setUserLists] = useState([]);
     const [favorites, setFavorites] = useState([]);
+    const [forYouMovies, setForYouMovies] = useState([]);
     const [selectedList, setSelectedList] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -39,6 +40,20 @@ function Home() {
 
                     const favRes = await userAPI.getFavorites(userId);
                     setFavorites(favRes.data.map(m => m.movie_id));
+
+                    // Load For You recommendations (cached, 24h)
+                    try {
+                        const forYouRes = await recommendationAPI.getForYou(userId);
+                        if (forYouRes.data.recommendations && forYouRes.data.recommendations.length > 0) {
+                            setForYouMovies(forYouRes.data.recommendations);
+                        } else {
+                            // No cache yet → generate fresh
+                            const genRes = await recommendationAPI.generateForUser(userId);
+                            setForYouMovies(genRes.data.recommendations || []);
+                        }
+                    } catch (e) {
+                        console.error('Failed to load For You:', e);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to load home data:', error);
@@ -51,6 +66,7 @@ function Home() {
             setUserLists([]);
             setRecentlyWatched([]);
             setFavorites([]);
+            setForYouMovies([]);
         }
 
         loadData();
@@ -130,6 +146,23 @@ function Home() {
             )}
 
             <div className={styles.content}>
+
+                {/* For You Section */}
+                {user && forYouMovies.length > 0 && (
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>✨ For You</h2>
+                        <div className={styles.scrollRow}>
+                            {forYouMovies.map((movie) => (
+                                <MovieCard
+                                    key={movie.movie_id}
+                                    movie={movie}
+                                    isFavorite={favorites.includes(movie.movie_id)}
+                                    onToggleFavorite={handleToggleFavorite}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* New Releases Section */}
                 <section className={styles.section}>

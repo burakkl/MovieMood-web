@@ -183,16 +183,12 @@ function MyLists() {
 
     const generateRecommendedList = async () => {
         try {
+            // Force fresh generation (bypass 24h cache)
             const response = await recommendationAPI.generateForUser(userId);
             const { recommendations, metadata } = response.data;
 
-            if (recommendations.length === 0) {
-                alert('Not enough data to generate recommendations. Watch some movies first!');
-                return;
-            }
-
-            if (recommendations.length === 0) {
-                alert('Not enough data to generate recommendations. Watch some movies first!');
+            if (!recommendations || recommendations.length === 0) {
+                alert('Not enough data to generate recommendations. Add some movies to your favorites first!');
                 return;
             }
 
@@ -214,7 +210,10 @@ function MyLists() {
             }
 
             loadLists();
-            alert(`Generated a list with ${recommendations.length} recommended movies!\\n\\nBased on: ${metadata.topGenres.join(', ')}`);
+            const source = metadata.source === 'personalized' 
+                ? `Based on your favorites: ${metadata.topGenres.slice(0, 3).join(', ')}`
+                : 'Based on popular movies';
+            alert(`Generated a list with ${recommendations.length} recommended movies!\n\n${source}`);
         } catch (error) {
             console.error('Recommendation generation failed:', error);
             alert(error.response?.data?.error || 'Failed to generate recommendations');

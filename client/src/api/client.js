@@ -94,6 +94,7 @@ export const chatAPI = {
 // Recommendations APIs
 export const recommendationAPI = {
     generateForUser: (userId) => api.post(`/recommendations/generate/${userId}`),
+    getForYou: (userId) => api.get(`/recommendations/for-you/${userId}`),
 };
 
 export default api;
