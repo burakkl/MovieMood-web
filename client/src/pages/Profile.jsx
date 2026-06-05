@@ -220,6 +220,12 @@ function Profile() {
         return `/${path}`;
     };
 
+    const getPosterUrl = (posterPath) => {
+        if (!posterPath) return 'https://via.placeholder.com/150x225?text=No+Poster';
+        if (posterPath.startsWith('http')) return posterPath;
+        return `https://image.tmdb.org/t/p/w500${posterPath}`;
+    };
+
     const profilePictureUrl = getImageUrl(
         profileUser.profilePicture || profileUser.profile_picture_path
     );
@@ -263,7 +269,7 @@ function Profile() {
                 <div className={styles.movieGrid}>
                     {userFavorites.map(movie => (
                         <div key={movie.movie_id} className={styles.miniMovie} onClick={() => { setActiveModal(null); navigate(`/movies/${movie.movie_id}`); }}>
-                            <img src={movie.poster_url} alt={movie.title} />
+                            <img src={getPosterUrl(movie.poster_path)} alt={movie.title} />
                         </div>
                     ))}
                 </div>
@@ -468,7 +474,7 @@ function Profile() {
                                     <div className={styles.movieGrid}>
                                         {userFavorites.slice(0, 4).map(movie => (
                                             <div key={movie.movie_id} className={styles.miniMovie} onClick={() => navigate(`/movies/${movie.movie_id}`)}>
-                                                <img src={movie.poster_url} alt={movie.title} />
+                                                <img src={getPosterUrl(movie.poster_path)} alt={movie.title} />
                                             </div>
                                         ))}
                                     </div>
