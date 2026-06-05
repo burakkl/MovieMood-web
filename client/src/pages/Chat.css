@@ -1,13 +1,13 @@
 .chat-page {
     display: flex;
     height: calc(100vh - 60px);
-    background: #0a0a0a;
+    background: transparent;
 }
 
 .chat-sidebar {
     width: 300px;
-    background: #1a1a1a;
-    border-right: 1px solid #333;
+    background: var(--dark-bg-2);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
     overflow-y: auto;
 }
 
@@ -15,7 +15,7 @@
     color: #fff;
     padding: 20px;
     margin: 0;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .friends-list {
@@ -66,8 +66,8 @@
 }
 
 .chat-header {
-    background: #1a1a1a;
-    border-bottom: 1px solid #333;
+    background: var(--dark-bg-2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 20px;
 }
 
@@ -99,7 +99,7 @@
 }
 
 .message.received {
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
     align-self: flex-start;
 }
@@ -117,15 +117,15 @@
     display: flex;
     gap: 10px;
     padding: 20px;
-    background: #1a1a1a;
-    border-top: 1px solid #333;
+    background: var(--dark-bg-2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .message-input-form input {
     flex: 1;
     padding: 12px;
-    background: #2a2a2a;
-    border: 1px solid #444;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
     color: #fff;
     font-size: 14px;
@@ -213,10 +213,10 @@
     z-index: 2000;
 }
 .chat-modal-content {
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
     padding: 20px;
     border-radius: 12px;
-    border: 1px solid #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     min-width: 300px;
     max-width: 90vw;
     max-height: 80vh;
@@ -232,7 +232,7 @@
     margin: 20px 0;
 }
 .modal-list-item {
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.05);
     padding: 15px;
     border-radius: 8px;
     cursor: pointer;

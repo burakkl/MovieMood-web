@@ -1,6 +1,6 @@
 .container {
     min-height: 100vh;
-    background-color: var(--dark-bg);
+    background-color: transparent;
 }
 
 .content {
@@ -414,7 +414,7 @@
 }
 
 .modalContent {
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
     padding: 30px;
     border-radius: 12px;
     width: 90%;

@@ -18,9 +18,9 @@
     flex: 1;
     padding: 12px 20px;
     font-size: 16px;
-    border: 2px solid #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
     color: #fff;
 }
 
@@ -60,11 +60,11 @@
 }
 
 .genre-filter-panel {
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 30px;
-    border: 1px solid #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .genre-filter-panel h3 {
@@ -84,14 +84,14 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.3s;
 }
 
 .genre-checkbox:hover {
-    background: #333;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .genre-checkbox input {
@@ -159,7 +159,7 @@
     border-radius: 8px;
     overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
 }
 
 .movie-card:hover {

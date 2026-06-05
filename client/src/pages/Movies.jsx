@@ -152,7 +152,7 @@ function Movies() {
     };
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+        <div style={{ minHeight: '100vh' }}>
             <Navbar />
             <div className="explore-page">
                 <div className="search-section" style={{ marginTop: '0', padding: '0' }}>

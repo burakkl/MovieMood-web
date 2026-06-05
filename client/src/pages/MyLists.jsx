@@ -228,7 +228,7 @@ function MyLists() {
     };
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#141414' }}>
+        <div style={{ minHeight: '100vh' }}>
             <Navbar />
             <div className="my-lists-page">
                 <div className="lists-header">
