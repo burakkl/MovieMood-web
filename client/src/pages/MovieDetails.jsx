@@ -204,7 +204,7 @@ function MovieDetails() {
     if (!movie) return <div className="error">Movie not found</div>;
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+        <div style={{ minHeight: '100vh' }}>
             <Navbar />
             <div className="movie-details-page">
                 <div className="movie-header">

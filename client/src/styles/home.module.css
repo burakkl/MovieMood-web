@@ -84,3 +84,116 @@
     color: var(--text-secondary);
     font-size: 12px;
 }
+
+/* Hero Section */
+.hero {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    min-height: 400px;
+    margin-bottom: 40px;
+    overflow: hidden;
+}
+
+.heroImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.heroOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, rgba(11, 15, 25, 1) 0%, rgba(11, 15, 25, 0.6) 50%, rgba(11, 15, 25, 0) 100%),
+                linear-gradient(to top, rgba(11, 15, 25, 1) 0%, rgba(11, 15, 25, 0) 50%);
+    display: flex;
+    align-items: center;
+    padding: 0 5%;
+}
+
+.heroContent {
+    max-width: 600px;
+}
+
+.heroTitle {
+    font-size: 3rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 800;
+}
+
+.heroOverview {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 2rem;
+}
+
+.heroButton {
+    padding: 12px 30px;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.heroButton:hover {
+    background-color: var(--netflix-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+/* My Lists Pills */
+.listPill {
+    min-width: 160px;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.listPill:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.listPill.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.listPill h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.listPill p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.selectedListContainer {
+    margin-top: 1.5rem;
+    background-color: var(--dark-bg-2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.selectedListContainer h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}

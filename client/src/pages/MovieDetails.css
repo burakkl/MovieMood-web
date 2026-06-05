@@ -34,7 +34,7 @@
 
 .movie-info .imdb-rating span,
 .movie-info .user-rating span {
-    color: #e50914;
+    color: var(--netflix-red);
     font-weight: bold;
 }
 
@@ -52,7 +52,7 @@
 
 .action-buttons button {
     padding: 12px 24px;
-    background: #e50914;
+    background: var(--netflix-red);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -62,7 +62,7 @@
 }
 
 .action-buttons button:hover:not(:disabled) {
-    background: #f40612;
+    background: var(--netflix-dark);
     transform: translateY(-2px);
 }
 
@@ -86,8 +86,8 @@
 .comment-form textarea {
     width: 100%;
     padding: 12px;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: var(--dark-bg-2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #fff;
     font-size: 16px;
@@ -97,7 +97,7 @@
 
 .comment-form button {
     padding: 10px 20px;
-    background: #e50914;
+    background: var(--netflix-red);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -106,7 +106,7 @@
 }
 
 .comment-form button:hover {
-    background: #f40612;
+    background: var(--netflix-dark);
 }
 
 .comments-list {
@@ -116,14 +116,14 @@
 }
 
 .comment {
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
     padding: 15px;
     border-radius: 8px;
-    border: 1px solid #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .comment strong {
-    color: #e50914;
+    color: var(--netflix-red);
     display: block;
     margin-bottom: 8px;
 }
@@ -162,11 +162,11 @@
 }
 
 .modal {
-    background: #1a1a1a;
+    background: var(--dark-bg-2);
     padding: 30px;
     border-radius: 12px;
     min-width: 400px;
-    border: 1px solid #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modal h2 {
@@ -192,12 +192,12 @@
 }
 
 .modal button[type="submit"] {
-    background: #e50914;
+    background: var(--netflix-red);
     color: #fff;
 }
 
 .modal button[type="submit"]:hover {
-    background: #f40612;
+    background: var(--netflix-dark);
 }
 
 .modal button[type="button"] {
@@ -218,7 +218,7 @@
 
 .lists-selection button {
     padding: 12px;
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.05);
     color: #fff;
     border: none;
     border-radius: 6px;

@@ -98,9 +98,36 @@ function Home() {
         );
     }
 
+    const heroMovie = popularMovies.length > 0 ? popularMovies[0] : null;
+
     return (
         <div className={styles.container}>
             <Navbar />
+
+            {/* Simple Hero Section */}
+            {heroMovie && (
+                <div className={styles.hero}>
+                    <img 
+                        src={getPosterUrl(heroMovie.poster_path)} 
+                        alt={heroMovie.title} 
+                        className={styles.heroImage}
+                    />
+                    <div className={styles.heroOverlay}>
+                        <div className={styles.heroContent}>
+                            <h1 className={styles.heroTitle}>{heroMovie.title}</h1>
+                            <p className={styles.heroOverview}>
+                                {heroMovie.overview ? heroMovie.overview.substring(0, 150) + '...' : 'No overview available.'}
+                            </p>
+                            <button 
+                                className={styles.heroButton}
+                                onClick={() => navigate(`/movies/${heroMovie.movie_id}`)}
+                            >
+                                Detayları Gör
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className={styles.content}>
 
@@ -147,17 +174,10 @@ function Home() {
                                 <div
                                     key={list.list_id}
                                     onClick={() => handleListClick(list)}
-                                    style={{
-                                        minWidth: '200px',
-                                        backgroundColor: selectedList?.list_id === list.list_id ? '#e50914' : '#333',
-                                        padding: '1rem',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.3s ease'
-                                    }}
+                                    className={`${styles.listPill} ${selectedList?.list_id === list.list_id ? styles.active : ''}`}
                                 >
-                                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{list.list_name}</h3>
-                                    <p style={{ margin: '5px 0 0', fontSize: '0.9rem', color: '#ccc' }}>{list.movies?.length || 0} movies</p>
+                                    <h3>{list.list_name}</h3>
+                                    <p>{list.movies?.length || 0} movies</p>
                                 </div>
                             ))}
                             {userLists.length === 0 && (
@@ -167,8 +187,8 @@ function Home() {
 
                         {/* Selected List Movies */}
                         {selectedList && (
-                            <div className={styles.selectedListContainer} style={{ marginTop: '1.5rem', backgroundColor: '#1a1a1a', padding: '1.5rem', borderRadius: '12px' }}>
-                                <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Movies in: {selectedList.list_name}</h3>
+                            <div className={styles.selectedListContainer}>
+                                <h3>Movies in: {selectedList.list_name}</h3>
                                 <div className={styles.movieGrid}>
                                     {selectedList.movies && selectedList.movies.length > 0 ? (
                                         selectedList.movies.map(movie => (
